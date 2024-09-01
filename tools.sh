@@ -16,10 +16,14 @@ green "              Menginstall tools!"
 sleep 0.5
 green "                   Proses dimulai..."
 sleep 0.5
+
+# Update repository dan sistem
 apt update -y
 apt upgrade -y
 apt dist-upgrade -y
 apt install sudo -y
+
+# Instalasi untuk Debian dan Ubuntu
 sudo apt-get clean all
 apt install -y debconf-utils
 apt-get remove --purge ufw firewalld -y
@@ -38,6 +42,7 @@ sudo apt-get -y --purge remove apache2* >/dev/null 2>&1
 sudo apt-get -y --purge remove bind9* >/dev/null 2>&1
 sudo apt-get -y remove sendmail* >/dev/null 2>&1
 apt autoremove -y >/dev/null 2>&1
+
 # finishing
 apt install python3 python3-pip git speedtest-cli -y
 sudo apt-get install -y p7zip-full

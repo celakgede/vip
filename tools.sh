@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-REPOSC="http://www.rmblvpn.xyz"
+REPOSC="https://raw.githubusercontent.com/celakgede/vip/main"
 red='\e[1;31m'
 green2='\e[1;32m'
 yell='\e[1;33m'

@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-REPOSC="https://raw.githubusercontent.com/celakgede/vip/main"
+REPOSC="http://www.rmblvpn.xyz"
 red='\e[1;31m'
 green2='\e[1;32m'
 yell='\e[1;33m'
@@ -8,24 +8,8 @@ NC='\e[0m'
 green() { echo -e "\\033[32;1m${*}\\033[0m"; }
 red() { echo -e "\\033[31;1m${*}\\033[0m"; }
 W='\e[1;37m'
-
 echo -e " ${W}Menginstall tools !"
 echo -e " Proses dimulai...${NC}"
-
-# Update sources.list for Ubuntu 22.04
-cat <<EOF > /etc/apt/sources.list
-deb http://us.archive.ubuntu.com/ubuntu/ jammy main restricted
-deb http://us.archive.ubuntu.com/ubuntu/ jammy-updates main restricted
-deb http://us.archive.ubuntu.com/ubuntu/ jammy universe
-deb http://us.archive.ubuntu.com/ubuntu/ jammy-updates universe
-deb http://us.archive.ubuntu.com/ubuntu/ jammy multiverse
-deb http://us.archive.ubuntu.com/ubuntu/ jammy-updates multiverse
-deb http://us.archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse
-deb http://security.ubuntu.com/ubuntu jammy-security main restricted
-deb http://security.ubuntu.com/ubuntu jammy-security universe
-deb http://security.ubuntu.com/ubuntu jammy-security multiverse
-EOF
-
 apt update -y
 apt upgrade -y
 apt dist-upgrade -y
@@ -48,7 +32,6 @@ sudo apt-get -y --purge remove apache2* >/dev/null 2>&1
 sudo apt-get -y --purge remove bind9* >/dev/null 2>&1
 sudo apt-get -y remove sendmail* >/dev/null 2>&1
 apt autoremove -y >/dev/null 2>&1
-
 # finishing
 apt install python3 python3-pip git speedtest-cli -y
 sudo apt-get install -y p7zip-full

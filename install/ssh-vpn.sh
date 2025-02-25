@@ -198,7 +198,7 @@ echo "/usr/sbin/nologin" >> /etc/shells
 /etc/init.d/dropbear restart
 
 # // install squid for debian 9,10 & ubuntu 20.04
-apt -y install squid3
+apt update && apt -y install squid
 
 # install squid for debian 11
 apt -y install squid

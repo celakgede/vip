@@ -10,7 +10,7 @@ import getopt
 
 # Konfigurasi Default
 LISTENING_ADDR = '127.0.0.1'
-LISTENING_PORT = 700  # <-- DIKEMBALIKAN KE PORT ASLI
+LISTENING_PORT = 700 
 PASS = ''
 
 # Konstanta

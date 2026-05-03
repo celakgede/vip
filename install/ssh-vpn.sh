@@ -2,6 +2,7 @@
 #
 # ==================================================
 REPOSC="https://raw.githubusercontent.com/celakgede/vip/main"
+
 junc0() { rm -rf $0; exit 0; }
 trap junc0 SIGINT
 trap junc0 SIGTERM
@@ -187,18 +188,64 @@ sed -i '/Port 22/a Port 22' /etc/ssh/sshd_config
 /etc/init.d/ssh restart
 
 echo "=== Install Dropbear ==="
-# install dropbear
-apt -y install dropbear
-sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
-sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=143/g' /etc/default/dropbear
-sed -i 's/DROPBEAR_EXTRA_ARGS=/DROPBEAR_EXTRA_ARGS="-p 50000 -p 109 -p 110 -p 69"/g' /etc/default/dropbear
-echo "/bin/false" >> /etc/shells
-echo "/usr/sbin/nologin" >> /etc/shells
-/etc/init.d/ssh restart
-/etc/init.d/dropbear restart
+install_dropbear_auto_fix() {
+    OS_ID="$(. /etc/os-release 2>/dev/null && echo "$ID")"
+    OS_VER="$(. /etc/os-release 2>/dev/null && echo "$VERSION_ID" | cut -d. -f1)"
+
+    apt -y install dropbear
+    mkdir -p /etc/dropbear /run/dropbear
+
+    # Host key wajib ada di Debian 12/13 minimal image
+    [ -f /etc/dropbear/dropbear_rsa_host_key ] || dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key >/dev/null 2>&1 || true
+    [ -f /etc/dropbear/dropbear_ecdsa_host_key ] || dropbearkey -t ecdsa -f /etc/dropbear/dropbear_ecdsa_host_key >/dev/null 2>&1 || true
+    [ -f /etc/dropbear/dropbear_ed25519_host_key ] || dropbearkey -t ed25519 -f /etc/dropbear/dropbear_ed25519_host_key >/dev/null 2>&1 || true
+
+    cp -f /etc/default/dropbear /etc/default/dropbear.bak.$(date +%s) 2>/dev/null || true
+
+    # Config sama untuk Debian/Ubuntu, tapi restart khusus Debian 12/13 lebih aman.
+    cat >/etc/default/dropbear <<'EOD'
+NO_START=0
+DROPBEAR_PORT=143
+DROPBEAR_EXTRA_ARGS="-p 143 -p 109 -p 110 -p 69 -p 50000 -K 60 -I 180 -W 65536"
+DROPBEAR_BANNER="/etc/issue.net"
+DROPBEAR_RECEIVE_WINDOW=65536
+EOD
+
+    grep -qxF "/bin/false" /etc/shells || echo "/bin/false" >> /etc/shells
+    grep -qxF "/usr/sbin/nologin" /etc/shells || echo "/usr/sbin/nologin" >> /etc/shells
+
+    systemctl daemon-reload || true
+    systemctl enable dropbear >/dev/null 2>&1 || true
+
+    # Pastikan OpenSSH hidup dulu sebagai jalur aman.
+    systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || /etc/init.d/ssh restart 2>/dev/null || true
+
+    CURRENT_PORT="$(echo "$SSH_CONNECTION" | awk '{print $4}')"
+
+    if [[ "$OS_ID" == "debian" && ( "$OS_VER" == "12" || "$OS_VER" == "13" ) ]]; then
+        echo "Detected Debian $OS_VER: applying safe Dropbear start without pkill"
+
+        # Jangan pkill di installer. Kalau sedang login via dropbear, pkill bisa putus total.
+        if [[ "$CURRENT_PORT" == "143" || "$CURRENT_PORT" == "109" || "$CURRENT_PORT" == "110" || "$CURRENT_PORT" == "69" || "$CURRENT_PORT" == "50000" ]]; then
+            echo "Login terdeteksi via Dropbear port $CURRENT_PORT, tidak restart paksa. Start only."
+            systemctl start dropbear 2>/dev/null || /etc/init.d/dropbear start 2>/dev/null || true
+        else
+            systemctl restart dropbear 2>/dev/null || systemctl start dropbear 2>/dev/null || /etc/init.d/dropbear restart 2>/dev/null || true
+        fi
+    else
+        echo "Detected $OS_ID $OS_VER: applying normal Dropbear restart"
+        systemctl restart dropbear 2>/dev/null || systemctl start dropbear 2>/dev/null || /etc/init.d/dropbear restart 2>/dev/null || true
+    fi
+
+    echo "=== STATUS DROPBEAR ==="
+    systemctl status dropbear --no-pager || true
+    echo "=== PORT DROPBEAR ==="
+    ss -lntp | grep dropbear || true
+}
+install_dropbear_auto_fix
 
 # // install squid for debian 9,10 & ubuntu 20.04
-apt update && apt -y install squid
+apt -y install squid3
 
 # install squid for debian 11
 apt -y install squid
